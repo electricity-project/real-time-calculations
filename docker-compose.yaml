@@ -1,0 +1,7 @@
+name: real-time-calculations-module
+services:
+  real-time-calculations:
+    build:
+      context: .
+    ports:
+      - 8079:8079
