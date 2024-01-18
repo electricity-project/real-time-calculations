@@ -1,5 +1,6 @@
 package com.electricity.project.realtimecalculations.api.production;
 
+import com.electricity.project.realtimecalculations.api.powerstationDTO.PowerStationState;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -308,7 +309,7 @@ public final class ImmutablePowerProductionDTO
    * ImmutablePowerProductionDTO.builder()
    *    .id(Long) // optional {@link PowerProductionDTO#getId() id}
    *    .ipv6Address(String) // required {@link PowerProductionDTO#getIpv6Address() ipv6Address}
-   *    .state(com.electricity.project.realtimecalculations.api.production.PowerStationState) // required {@link PowerProductionDTO#getState() state}
+   *    .state(com.electricity.project.realtimecalculations.api.powerstation.PowerStationState) // required {@link PowerProductionDTO#getState() state}
    *    .producedPower(Long) // required {@link PowerProductionDTO#getProducedPower() producedPower}
    *    .timestamp(java.time.LocalDateTime) // required {@link PowerProductionDTO#getTimestamp() timestamp}
    *    .build();

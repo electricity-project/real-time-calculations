@@ -1,4 +1,4 @@
-package com.electricity.project.realtimecalculations.api.production;
+package com.electricity.project.realtimecalculations.api.powerstationDTO;
 
 public enum PowerStationState {
     WORKING,

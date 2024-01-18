@@ -1,6 +1,7 @@
 package com.electricity.project.realtimecalculations.core.client.centralmodule;
 
 import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
@@ -10,7 +11,7 @@ import reactor.netty.http.client.HttpClient;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-
+@Slf4j
 @Component
 public class CentralApiClient implements CentralClient {
     private final WebClient client;
@@ -28,6 +29,7 @@ public class CentralApiClient implements CentralClient {
 
     @Override
     public Void startPowerStation(@NonNull String ipv6Address) {
+        log.info("Automatically turning on Power station with Ipv6: " + ipv6Address);
         return client.get()
                 .uri(mediativeMappingUrl+"/start", uriBuilder -> uriBuilder
                         .queryParam("ipv6Address", ipv6Address)
@@ -42,6 +44,7 @@ public class CentralApiClient implements CentralClient {
 
     @Override
     public Void stopPowerStation(@NonNull String ipv6Address) {
+        log.info("Automatically turning off Power station with Ipv6: " + ipv6Address);
         return client.get()
                 .uri(mediativeMappingUrl+"/stop", uriBuilder -> uriBuilder
                         .queryParam("ipv6Address", ipv6Address)

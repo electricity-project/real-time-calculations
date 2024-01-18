@@ -3,5 +3,7 @@ services:
   real-time-calculations:
     build:
       context: .
+    environment:
+      - ENERGY_THRESHOLD=90000.0
     ports:
       - 8079:8079
