@@ -4,6 +4,9 @@ services:
     build:
       context: .
     environment:
-      - ENERGY_THRESHOLD=90000.0
+      - CALCULATIONS_DB_ACCESS_URL=http://calculations-db-access:8090
+      - CENTRAL_MODULE_URL=http://central-module:8080
+      - MEDIATIVE_MAPPING_URL=/mediative-module
+      - SERVER_PORT=8079
     ports:
       - 8079:8079

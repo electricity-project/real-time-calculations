@@ -15,5 +15,4 @@ RUN --mount=type=cache,target=/root/.m2 ./mvnw -f "$HOME"/pom.xml clean package 
 FROM eclipse-temurin:21-jre-jammy
 ARG JAR_FILE=/usr/app/target/*.jar
 COPY --from=build $JAR_FILE /app/real-time-calculations.jar
-EXPOSE 8083
 ENTRYPOINT java -jar /app/real-time-calculations.jar
