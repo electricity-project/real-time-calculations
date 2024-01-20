@@ -1,0 +1,94 @@
+services:
+
+  log_db:
+    image: postgres
+    container_name: log_db_container_rm
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: logdb
+    ports:
+      - "5003:5432"
+    healthcheck:
+      test: "exit 0"
+
+  rabbitmq:
+    build:
+      dockerfile_inline: |
+        FROM rabbitmq:3-management
+        RUN rabbitmq-plugins enable --offline rabbitmq_mqtt
+    environment:
+      RABBITMQ_DEFAULT_USER: rabbitmq-user
+      RABBITMQ_DEFAULT_PASS: password
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 30s
+      timeout: 30s
+      retries: 3
+    ports:
+      - 1883:1883
+
+  mediative-module:
+    build:
+      context: ../mediative-module/.
+    environment:
+      MQTT_CLIENT_USERNAME: rabbitmq-user
+      MQTT_CLIENT_PASSWORD: password
+      MQTT_BROKER_URL: tcp://rabbitmq:1883
+      KAFKA_BROKER_ADDRESS: kafka_container:9092
+      SPRING_DATASOURCE_URL: jdbc:postgresql://log_db:5432/logdb
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: password
+      SERVER_PORT: 8082
+    ports:
+      - "8082:8082"
+    depends_on:
+      kafka:
+        condition: service_started
+      log_db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  central-module:
+    build:
+      context: ../central-module/.
+    environment:
+      KAFKA_BROKER_ADDRESS: kafka_container:9092
+      CALCULATION_DATABASE_APPLICATION_ADDRESS: http://calculations-db-access:8090
+      MEDIATIVE_MODULE_APPLICATION_ADDRESS: http://mediative-module:8083
+    depends_on:
+      kafka:
+        condition: service_started
+      mediative-module:
+        condition: service_started
+    ports:
+      - "8081:8080"
+
+  kafka:
+    image: wurstmeister/kafka
+    container_name: kafka_container
+    restart: no
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://:9092
+      KAFKA_ADVERTISED_HOST_NAME: 127.0.0.1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+    depends_on:
+      - zookeeper
+
+  zookeeper:
+    image: zookeeper:3.8.2
+    container_name: zookeeper
+    restart: no
+    volumes:
+      - /data/zookeeper
+    ports:
+      - "2181:2181"
+
+  real-time-calculations:
+    depends_on:
+      central-module:
+        condition: service_started

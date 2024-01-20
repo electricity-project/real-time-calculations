@@ -55,17 +55,10 @@ public class PowerProductionEvaluationScheduler {
             Thread.sleep(2000);
         }
         if(!powerProductionDTOList.isEmpty()) {
-            log.info(powerProductionDTOList.toString());
-            log.info(powerStationDTOList.toString());
-            OptimizationDTO optimizationDTO = realTimeCalculations.calculateOptimalPowerStationsToRun(powerStationDTOList,
-                    powerProductionDTOList);
-            log.info("To turn on:");
-            log.info(optimizationDTO.getIpsToTurnOn().toString());
-            log.info("To turn off:");
-            log.info(optimizationDTO.getIpsToTurnOff().toString());
-            // to verify if routing through central works
-//            optimizationDTO.getIpsToTurnOff().forEach(centralClient::stopPowerStation);
-//            optimizationDTO.getIpsToTurnOn().forEach(centralClient::stopPowerStation);
+            OptimizationDTO optimizationDTO = realTimeCalculations.calculateOptimalPowerStationsToRun(powerProductionDTOList,
+                    powerStationDTOList);
+            optimizationDTO.getIpsToTurnOff().forEach(centralClient::stopPowerStation);
+            optimizationDTO.getIpsToTurnOn().forEach(centralClient::startPowerStation);
         }
         else {
             throw new RuntimeException("No power production data found for " + timeNow);

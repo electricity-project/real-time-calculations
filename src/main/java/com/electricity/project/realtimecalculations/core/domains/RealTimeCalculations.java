@@ -2,10 +2,12 @@ package com.electricity.project.realtimecalculations.core.domains;
 
 import com.electricity.project.realtimecalculations.api.optimization.OptimizationDTO;
 import com.electricity.project.realtimecalculations.api.powerstationDTO.PowerStationDTO;
+import com.electricity.project.realtimecalculations.api.powerstationDTO.PowerStationFilterDTO;
 import com.electricity.project.realtimecalculations.api.powerstationDTO.PowerStationState;
 import com.electricity.project.realtimecalculations.api.production.PowerProductionDTO;
 import com.electricity.project.realtimecalculations.api.solarpanel.ImmutableSolarPanelDTO;
 import com.electricity.project.realtimecalculations.api.windturbine.ImmutableWindTurbineDTO;
+import com.electricity.project.realtimecalculations.infrastucture.configuration.Threshold;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -20,28 +22,24 @@ import java.util.stream.Collectors;
 public class RealTimeCalculations implements IRealTimeCalculations{
     @Override
     public OptimizationDTO calculateOptimalPowerStationsToRun(
-            List<PowerStationDTO> powerStationDTOList,
-            List<PowerProductionDTO> sortedPowerProductionDTOList) {
+            List<PowerProductionDTO> sortedPowerProductionDTOList,
+            List<PowerStationDTO> powerStationDTOList) {
 
         sortedPowerProductionDTOList.sort(Collections.reverseOrder());
 
         List<List<PowerProductionDTO>> dividedPowerProductionDTOS = sortedPowerProductionDTOList.parallelStream().collect(Collectors.teeing(
                 Collectors.filtering(powerProductionDTO -> powerProductionDTO.getIpv6Address().equals(powerStationDTOList.stream()
                         .filter(powerStationDTO -> (powerProductionDTO.getIpv6Address().equals(powerStationDTO.getIpv6Address()) &&
-                                powerStationDTO.getClass().equals(ImmutableSolarPanelDTO.class) &&
-                                powerStationDTO.getState() != PowerStationState.DAMAGED &&
-                                powerStationDTO.getState() != PowerStationState.MAINTENANCE)
+                                powerStationDTO.getClass().equals(ImmutableSolarPanelDTO.class))
                         ).findFirst().map(PowerStationDTO::getIpv6Address).orElse(null)), Collectors.toList()),
                 Collectors.filtering(powerProductionDTO -> powerProductionDTO.getIpv6Address().equals(powerStationDTOList.stream()
                         .filter(powerStationDTO -> (powerProductionDTO.getIpv6Address().equals(powerStationDTO.getIpv6Address()) &&
-                                powerStationDTO.getClass().equals(ImmutableWindTurbineDTO.class) &&
-                                powerStationDTO.getState() != PowerStationState.DAMAGED &&
-                                powerStationDTO.getState() != PowerStationState.MAINTENANCE)
+                                powerStationDTO.getClass().equals(ImmutableWindTurbineDTO.class))
                         ).findFirst().map(PowerStationDTO::getIpv6Address).orElse(null)), Collectors.toList()),
                 List::of));
 
         double tmpSum, tmp, runningMax, sum = 0.0;
-        double threshold = Double.parseDouble(System.getenv("ENERGY_THRESHOLD"));
+        double threshold = Threshold.getEnergyThreshold();
         List<String> IpsToTurnOn = new ArrayList<>(), IpsToTurnOff = new ArrayList<>();
 
         for (List<PowerProductionDTO> powerProductionDTOSubList: dividedPowerProductionDTOS) {
