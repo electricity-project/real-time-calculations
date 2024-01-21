@@ -8,8 +8,8 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @SpringBootApplication
 public class RealtimecalculationsApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.run(RealtimecalculationsApplication.class, args);
-	}
+    public static void main(String[] args) {
+        SpringApplication.run(RealtimecalculationsApplication.class, args);
+    }
 
 }

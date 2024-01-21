@@ -11,6 +11,7 @@ import reactor.netty.http.client.HttpClient;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+
 @Slf4j
 @Component
 public class CentralApiClient implements CentralClient {
@@ -31,7 +32,7 @@ public class CentralApiClient implements CentralClient {
     public Void startPowerStation(@NonNull String ipv6Address) {
         log.info("Automatically turning on Power station with Ipv6: " + ipv6Address);
         return client.get()
-                .uri(mediativeMappingUrl+"/api/start", uriBuilder -> uriBuilder
+                .uri(mediativeMappingUrl + "/api/start", uriBuilder -> uriBuilder
                         .queryParam("ipv6Address", ipv6Address)
                         .build())
                 .accept(MediaType.APPLICATION_JSON)
@@ -46,7 +47,7 @@ public class CentralApiClient implements CentralClient {
     public Void stopPowerStation(@NonNull String ipv6Address) {
         log.info("Automatically turning off Power station with Ipv6: " + ipv6Address);
         return client.get()
-                .uri(mediativeMappingUrl+"/api/stop", uriBuilder -> uriBuilder
+                .uri(mediativeMappingUrl + "/api/stop", uriBuilder -> uriBuilder
                         .queryParam("ipv6Address", ipv6Address)
                         .build())
                 .accept(MediaType.APPLICATION_JSON)

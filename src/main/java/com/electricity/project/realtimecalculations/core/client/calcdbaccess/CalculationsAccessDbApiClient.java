@@ -12,15 +12,18 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriBuilder;
+import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
+import reactor.util.retry.Retry;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Component
-public class CalculationsAccessDbApiClient implements CalculationsAccessDbClient{
+public class CalculationsAccessDbApiClient implements CalculationsAccessDbClient {
     private final WebClient client;
 
     public CalculationsAccessDbApiClient(@Value("${calculations.db.access.url}") String baseUrl) {
@@ -32,17 +35,23 @@ public class CalculationsAccessDbApiClient implements CalculationsAccessDbClient
     }
 
     @Override
-    public List<PowerProductionDTO> getPowerProductionByMinute(@NonNull LocalDateTime time) {
+    public List<PowerProductionDTO> getPowerProductionByMinute(@NonNull ZonedDateTime time) {
         return client.get()
                 .uri("/power-production/date", uriBuilder -> uriBuilder
-                        .queryParam("time", time)
+                        .queryParam("time", time.format(DateTimeFormatter.ISO_INSTANT))
                         .build())
                 .accept(MediaType.APPLICATION_JSON)
                 .acceptCharset(StandardCharsets.UTF_8)
                 .retrieve()
                 .bodyToFlux(PowerProductionDTO.class)
                 .collectList()
-                .retry(3)
+                .flatMap(body -> {
+                    if (body.isEmpty()) {
+                        return Mono.error(new Throwable());
+                    }
+                    return Mono.just(body);
+                })
+                .retryWhen(Retry.fixedDelay(5, Duration.ofSeconds(10)))
                 .block();
     }
 

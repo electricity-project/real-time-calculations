@@ -2,7 +2,6 @@ package com.electricity.project.realtimecalculations.core.domains;
 
 import com.electricity.project.realtimecalculations.api.optimization.OptimizationDTO;
 import com.electricity.project.realtimecalculations.api.powerstationDTO.PowerStationDTO;
-import com.electricity.project.realtimecalculations.api.powerstationDTO.PowerStationFilterDTO;
 import com.electricity.project.realtimecalculations.api.powerstationDTO.PowerStationState;
 import com.electricity.project.realtimecalculations.api.production.PowerProductionDTO;
 import com.electricity.project.realtimecalculations.api.solarpanel.ImmutableSolarPanelDTO;
@@ -14,12 +13,13 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 
 @Slf4j
 @Component
-public class RealTimeCalculations implements IRealTimeCalculations{
+public class RealTimeCalculations implements IRealTimeCalculations {
     @Override
     public OptimizationDTO calculateOptimalPowerStationsToRun(
             List<PowerProductionDTO> sortedPowerProductionDTOList,
@@ -27,39 +27,34 @@ public class RealTimeCalculations implements IRealTimeCalculations{
 
         sortedPowerProductionDTOList.sort(Collections.reverseOrder());
 
-        List<List<PowerProductionDTO>> dividedPowerProductionDTOS = sortedPowerProductionDTOList.parallelStream().collect(Collectors.teeing(
-                Collectors.filtering(powerProductionDTO -> powerProductionDTO.getIpv6Address().equals(powerStationDTOList.stream()
-                        .filter(powerStationDTO -> (powerProductionDTO.getIpv6Address().equals(powerStationDTO.getIpv6Address()) &&
-                                powerStationDTO.getClass().equals(ImmutableSolarPanelDTO.class))
-                        ).findFirst().map(PowerStationDTO::getIpv6Address).orElse(null)), Collectors.toList()),
-                Collectors.filtering(powerProductionDTO -> powerProductionDTO.getIpv6Address().equals(powerStationDTOList.stream()
-                        .filter(powerStationDTO -> (powerProductionDTO.getIpv6Address().equals(powerStationDTO.getIpv6Address()) &&
-                                powerStationDTO.getClass().equals(ImmutableWindTurbineDTO.class))
-                        ).findFirst().map(PowerStationDTO::getIpv6Address).orElse(null)), Collectors.toList()),
-                List::of));
+        List<List<PowerProductionDTO>> dividedPowerProductionDTOS = sortedPowerProductionDTOList.stream()
+                .collect(Collectors.teeing(
+                        filterPowerStation(powerStationDTOList, ImmutableSolarPanelDTO.class),
+                        filterPowerStation(powerStationDTOList, ImmutableWindTurbineDTO.class),
+                        List::of));
 
         double tmpSum, tmp, runningMax, sum = 0.0;
         double threshold = Threshold.getEnergyThreshold();
         List<String> IpsToTurnOn = new ArrayList<>(), IpsToTurnOff = new ArrayList<>();
 
-        for (List<PowerProductionDTO> powerProductionDTOSubList: dividedPowerProductionDTOS) {
+        for (List<PowerProductionDTO> powerProductionDTOSubList : dividedPowerProductionDTOS) {
+            if (powerProductionDTOSubList.isEmpty()) continue;
+
             runningMax = powerProductionDTOSubList.get(0).getProducedPower();
-            for (PowerProductionDTO powerProductionDTO: powerProductionDTOSubList) {
+            for (PowerProductionDTO powerProductionDTO : powerProductionDTOSubList) {
                 tmp = powerProductionDTO.getProducedPower();
-                tmpSum = tmp+sum;
-                if(tmp == 0.0) {
+                tmpSum = tmp + sum;
+                if (tmp == 0.0) {
                     tmp = runningMax;
-                    tmpSum = tmp+sum;
-                    if(tmpSum <= threshold){
+                    tmpSum = tmp + sum;
+                    if (tmpSum <= threshold) {
                         sum += tmp;
                         IpsToTurnOn.add(powerProductionDTO.getIpv6Address());
                     }
-                }
-                else if(tmpSum <= threshold){
+                } else if (tmpSum <= threshold) {
                     sum += tmp;
-                }
-                else{
-                    if(powerProductionDTO.getState() == PowerStationState.WORKING) {
+                } else {
+                    if (powerProductionDTO.getState() == PowerStationState.WORKING) {
                         IpsToTurnOff.add(powerProductionDTO.getIpv6Address());
                     }
                 }
@@ -70,5 +65,13 @@ public class RealTimeCalculations implements IRealTimeCalculations{
                 .addAllIpsToTurnOff(IpsToTurnOff)
                 .addAllIpsToTurnOn(IpsToTurnOn)
                 .build();
+    }
+
+    private static Collector<PowerProductionDTO, ?, List<PowerProductionDTO>> filterPowerStation(
+            List<PowerStationDTO> powerStationDTOList, Class<?> powerStationType) {
+        return Collectors.filtering(powerProductionDTO -> powerProductionDTO.getIpv6Address().equals(powerStationDTOList.stream()
+                .filter(powerStationDTO -> (powerProductionDTO.getIpv6Address().equals(powerStationDTO.getIpv6Address()) &&
+                        powerStationDTO.getClass().equals(powerStationType))
+                ).findFirst().map(PowerStationDTO::getIpv6Address).orElse(null)), Collectors.toList());
     }
 }

@@ -7,7 +7,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import lombok.NonNull;
 import org.immutables.value.Value;
 
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.util.Optional;
 
 @Value.Immutable
@@ -29,7 +29,7 @@ public interface PowerProductionDTO extends Comparable<PowerProductionDTO> {
     Long getProducedPower();
 
     @JsonProperty(value = "timestamp", required = true)
-    LocalDateTime getTimestamp();
+    ZonedDateTime getTimestamp();
 
     @Override
     default int compareTo(@NonNull PowerProductionDTO powerProductionDTO) {

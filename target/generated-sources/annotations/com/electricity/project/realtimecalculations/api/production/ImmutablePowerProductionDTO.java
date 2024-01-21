@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -27,14 +27,14 @@ public final class ImmutablePowerProductionDTO
   private final String ipv6Address;
   private final PowerStationState state;
   private final Long producedPower;
-  private final LocalDateTime timestamp;
+  private final ZonedDateTime timestamp;
 
   private ImmutablePowerProductionDTO(
       Long id,
       String ipv6Address,
       PowerStationState state,
       Long producedPower,
-      LocalDateTime timestamp) {
+      ZonedDateTime timestamp) {
     this.id = id;
     this.ipv6Address = ipv6Address;
     this.state = state;
@@ -83,7 +83,7 @@ public final class ImmutablePowerProductionDTO
    */
   @JsonProperty(value = "timestamp", required = true)
   @Override
-  public LocalDateTime getTimestamp() {
+  public ZonedDateTime getTimestamp() {
     return timestamp;
   }
 
@@ -152,9 +152,9 @@ public final class ImmutablePowerProductionDTO
    * @param value A new value for timestamp
    * @return A modified copy of the {@code this} object
    */
-  public final ImmutablePowerProductionDTO withTimestamp(LocalDateTime value) {
+  public final ImmutablePowerProductionDTO withTimestamp(ZonedDateTime value) {
     if (this.timestamp == value) return this;
-    LocalDateTime newValue = Objects.requireNonNull(value, "timestamp");
+    ZonedDateTime newValue = Objects.requireNonNull(value, "timestamp");
     return new ImmutablePowerProductionDTO(this.id, this.ipv6Address, this.state, this.producedPower, newValue);
   }
 
@@ -227,7 +227,7 @@ public final class ImmutablePowerProductionDTO
     String ipv6Address;
     PowerStationState state;
     Long producedPower;
-    LocalDateTime timestamp;
+    ZonedDateTime timestamp;
     @JsonProperty("id")
     public void setId(Optional<Long> id) {
       this.id = id;
@@ -245,7 +245,7 @@ public final class ImmutablePowerProductionDTO
       this.producedPower = producedPower;
     }
     @JsonProperty(value = "timestamp", required = true)
-    public void setTimestamp(LocalDateTime timestamp) {
+    public void setTimestamp(ZonedDateTime timestamp) {
       this.timestamp = timestamp;
     }
     @Override
@@ -257,7 +257,7 @@ public final class ImmutablePowerProductionDTO
     @Override
     public Long getProducedPower() { throw new UnsupportedOperationException(); }
     @Override
-    public LocalDateTime getTimestamp() { throw new UnsupportedOperationException(); }
+    public ZonedDateTime getTimestamp() { throw new UnsupportedOperationException(); }
   }
 
   /**
@@ -311,7 +311,7 @@ public final class ImmutablePowerProductionDTO
    *    .ipv6Address(String) // required {@link PowerProductionDTO#getIpv6Address() ipv6Address}
    *    .state(com.electricity.project.realtimecalculations.api.powerstationDTO.PowerStationState) // required {@link PowerProductionDTO#getState() state}
    *    .producedPower(Long) // required {@link PowerProductionDTO#getProducedPower() producedPower}
-   *    .timestamp(java.time.LocalDateTime) // required {@link PowerProductionDTO#getTimestamp() timestamp}
+   *    .timestamp(java.time.ZonedDateTime) // required {@link PowerProductionDTO#getTimestamp() timestamp}
    *    .build();
    * </pre>
    * @return A new ImmutablePowerProductionDTO builder
@@ -339,7 +339,7 @@ public final class ImmutablePowerProductionDTO
     private String ipv6Address;
     private PowerStationState state;
     private Long producedPower;
-    private LocalDateTime timestamp;
+    private ZonedDateTime timestamp;
 
     private Builder() {
     }
@@ -427,7 +427,7 @@ public final class ImmutablePowerProductionDTO
      * @return {@code this} builder for use in a chained invocation
      */
     @JsonProperty(value = "timestamp", required = true)
-    public final Builder timestamp(LocalDateTime timestamp) {
+    public final Builder timestamp(ZonedDateTime timestamp) {
       this.timestamp = Objects.requireNonNull(timestamp, "timestamp");
       initBits &= ~INIT_BIT_TIMESTAMP;
       return this;

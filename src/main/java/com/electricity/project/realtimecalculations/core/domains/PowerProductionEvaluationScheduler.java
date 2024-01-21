@@ -15,11 +15,10 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @EnableAsync
 @Slf4j
@@ -28,39 +27,35 @@ public class PowerProductionEvaluationScheduler {
     private final CalculationsAccessDbClient calculationsAccessDbClient;
     private final IRealTimeCalculations realTimeCalculations;
     private final CentralClient centralClient;
-    private static PowerStationFilterDTO powerStationFilterDTO;
+    private static final PowerStationFilterDTO powerStationFilterDTO;
 
-    public PowerProductionEvaluationScheduler(final CalculationsAccessDbClient calculationsAccessDbClient, final IRealTimeCalculations realTimeCalculations, final CentralClient centralClient) {
-        this.calculationsAccessDbClient = calculationsAccessDbClient;
-        this.realTimeCalculations = realTimeCalculations;
-        this.centralClient = centralClient;
+    static {
         powerStationFilterDTO = PowerStationFilterDTO.builder()
                 .addStatePatterns(PowerStationState.WORKING)
                 .addStatePatterns(PowerStationState.STOPPED).build();
     }
 
+    public PowerProductionEvaluationScheduler(final CalculationsAccessDbClient calculationsAccessDbClient, final IRealTimeCalculations realTimeCalculations, final CentralClient centralClient) {
+        this.calculationsAccessDbClient = calculationsAccessDbClient;
+        this.realTimeCalculations = realTimeCalculations;
+        this.centralClient = centralClient;
+    }
+
     @Async
     @Scheduled(cron = "1 * * * * ?")
-    public void scheduleFixedRateTaskAsync() throws InterruptedException {
-        List<PowerProductionDTO> powerProductionDTOList = Collections.emptyList();
-        List<PowerStationDTO> powerStationDTOList = Collections.emptyList();
-        LocalDateTime timeNow = ZonedDateTime.ofInstant(Instant.now(),ZoneId.of("Europe/Warsaw"))
-                .toLocalDateTime().withSecond(0).withNano(0);
-        for(int i = 0; i < 10; i++) {
-            powerProductionDTOList = calculationsAccessDbClient.getPowerProductionByMinute(timeNow);
-            if(!powerProductionDTOList.isEmpty()) {
-                powerStationDTOList = calculationsAccessDbClient.getFilteredStations(powerStationFilterDTO);
-                break;
-            }
-            Thread.sleep(2000);
-        }
-        if(!powerProductionDTOList.isEmpty()) {
-            OptimizationDTO optimizationDTO = realTimeCalculations.calculateOptimalPowerStationsToRun(powerProductionDTOList,
-                    powerStationDTOList);
+    public void scheduleFixedRateTaskAsync() {
+        ZonedDateTime timeNow = ZonedDateTime.ofInstant(Instant.now(), ZoneId.of("Europe/Warsaw"))
+                .withSecond(0).withNano(0);
+
+        List<PowerProductionDTO> powerProductionDTOList = calculationsAccessDbClient.getPowerProductionByMinute(timeNow);
+        log.info("Lista powerProductionDTOList: {}", powerProductionDTOList.stream().map(PowerProductionDTO::toString).collect(Collectors.joining()));
+        if (!powerProductionDTOList.isEmpty()) {
+            List<PowerStationDTO> powerStationDTOList = calculationsAccessDbClient.getFilteredStations(powerStationFilterDTO);
+            log.info("Lista powerStationDTOList: {}", powerStationDTOList.stream().map(PowerStationDTO::toString).collect(Collectors.joining()));
+            OptimizationDTO optimizationDTO = realTimeCalculations.calculateOptimalPowerStationsToRun(powerProductionDTOList, powerStationDTOList);
             optimizationDTO.getIpsToTurnOff().forEach(centralClient::stopPowerStation);
             optimizationDTO.getIpsToTurnOn().forEach(centralClient::startPowerStation);
-        }
-        else {
+        } else {
             throw new RuntimeException("No power production data found for " + timeNow);
         }
     }
