@@ -51,7 +51,7 @@ public class CalculationsAccessDbApiClient implements CalculationsAccessDbClient
                     }
                     return Mono.just(body);
                 })
-                .retryWhen(Retry.fixedDelay(5, Duration.ofSeconds(10)))
+                .retryWhen(Retry.fixedDelay(3, Duration.ofSeconds(10)))
                 .block();
     }
 

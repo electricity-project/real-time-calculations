@@ -18,7 +18,6 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @EnableAsync
 @Slf4j
@@ -42,16 +41,14 @@ public class PowerProductionEvaluationScheduler {
     }
 
     @Async
-    @Scheduled(cron = "1 * * * * ?")
+    @Scheduled(cron = "15 * * * * ?")
     public void scheduleFixedRateTaskAsync() {
         ZonedDateTime timeNow = ZonedDateTime.ofInstant(Instant.now(), ZoneId.of("Europe/Warsaw"))
                 .withSecond(0).withNano(0);
 
         List<PowerProductionDTO> powerProductionDTOList = calculationsAccessDbClient.getPowerProductionByMinute(timeNow);
-        log.info("Lista powerProductionDTOList: {}", powerProductionDTOList.stream().map(PowerProductionDTO::toString).collect(Collectors.joining()));
         if (!powerProductionDTOList.isEmpty()) {
             List<PowerStationDTO> powerStationDTOList = calculationsAccessDbClient.getFilteredStations(powerStationFilterDTO);
-            log.info("Lista powerStationDTOList: {}", powerStationDTOList.stream().map(PowerStationDTO::toString).collect(Collectors.joining()));
             OptimizationDTO optimizationDTO = realTimeCalculations.calculateOptimalPowerStationsToRun(powerProductionDTOList, powerStationDTOList);
             optimizationDTO.getIpsToTurnOff().forEach(centralClient::stopPowerStation);
             optimizationDTO.getIpsToTurnOn().forEach(centralClient::startPowerStation);
