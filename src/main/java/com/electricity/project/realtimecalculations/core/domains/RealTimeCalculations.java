@@ -25,7 +25,9 @@ public class RealTimeCalculations implements IRealTimeCalculations {
             List<PowerProductionDTO> sortedPowerProductionDTOList,
             List<PowerStationDTO> powerStationDTOList) {
 
-        sortedPowerProductionDTOList.sort(Collections.reverseOrder());
+        sortedPowerProductionDTOList = sortedPowerProductionDTOList.stream()
+                .sorted(Collections.reverseOrder())
+                .toList();
 
         List<List<PowerProductionDTO>> dividedPowerProductionDTOS = sortedPowerProductionDTOList.stream()
                 .collect(Collectors.teeing(
