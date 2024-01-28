@@ -6,6 +6,7 @@ import com.electricity.project.realtimecalculations.api.powerstationDTO.PowerSta
 import com.electricity.project.realtimecalculations.api.powerstationDTO.PowerStationFilterDTO;
 import com.electricity.project.realtimecalculations.api.powerstationDTO.PowerStationState;
 import com.electricity.project.realtimecalculations.api.production.PowerProductionDTO;
+import com.electricity.project.realtimecalculations.api.weather.CurrentWeatherDTO;
 import com.electricity.project.realtimecalculations.core.client.calcdbaccess.CalculationsAccessDbClient;
 import com.electricity.project.realtimecalculations.core.client.centralmodule.CentralClient;
 import lombok.extern.slf4j.Slf4j;
@@ -49,7 +50,8 @@ public class PowerProductionEvaluationScheduler {
         List<PowerProductionDTO> powerProductionDTOList = calculationsAccessDbClient.getPowerProductionByMinute(timeNow);
         if (!powerProductionDTOList.isEmpty()) {
             List<PowerStationDTO> powerStationDTOList = calculationsAccessDbClient.getFilteredStations(powerStationFilterDTO);
-            OptimizationDTO optimizationDTO = realTimeCalculations.calculateOptimalPowerStationsToRun(powerProductionDTOList, powerStationDTOList);
+            CurrentWeatherDTO currentWeather = calculationsAccessDbClient.getCurrentWeather();
+            OptimizationDTO optimizationDTO = realTimeCalculations.calculateOptimalPowerStationsToRunWithWeather(powerProductionDTOList, powerStationDTOList, currentWeather);
             optimizationDTO.getIpsToTurnOff().forEach(centralClient::stopPowerStation);
             optimizationDTO.getIpsToTurnOn().forEach(centralClient::startPowerStation);
         } else {

@@ -3,6 +3,7 @@ package com.electricity.project.realtimecalculations.core.client.calcdbaccess;
 import com.electricity.project.realtimecalculations.api.powerstationDTO.PowerStationDTO;
 import com.electricity.project.realtimecalculations.api.powerstationDTO.PowerStationFilterDTO;
 import com.electricity.project.realtimecalculations.api.production.PowerProductionDTO;
+import com.electricity.project.realtimecalculations.api.weather.CurrentWeatherDTO;
 import lombok.NonNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
@@ -52,6 +53,17 @@ public class CalculationsAccessDbApiClient implements CalculationsAccessDbClient
                     return Mono.just(body);
                 })
                 .retryWhen(Retry.fixedDelay(3, Duration.ofSeconds(10)))
+                .block();
+    }
+
+    @Override
+    public CurrentWeatherDTO getCurrentWeather() {
+        return client.get()
+                .uri("/weather-api/current")
+                .acceptCharset(StandardCharsets.UTF_8)
+                .retrieve()
+                .bodyToMono(CurrentWeatherDTO.class)
+                .retry(3)
                 .block();
     }
 
